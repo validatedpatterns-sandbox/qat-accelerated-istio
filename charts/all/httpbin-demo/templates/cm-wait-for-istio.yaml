@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wait-for-istio
+  namespace: {{ .Values.workload.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+data:
+  wait-for-istio.sh: |
+    #!/bin/bash
+
+    workload_ns='{{ .Values.workload.namespace }}'
+    waiting_time=10
+    
+    until [[ $(oc get ns ${workload_ns} -o jsonpath='{.metadata.labels}') == *"\"istio.io/rev\":\"istio-system\""* ]]
+    do
+      sleep ${waiting_time}
+    done
+    sleep ${waiting_time}

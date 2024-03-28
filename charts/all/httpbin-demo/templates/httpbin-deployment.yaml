@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.workload.name }}
+  namespace: {{ .Values.workload.namespace }}
+  labels:
+    app: {{ .Values.workload.name }}
+    service: {{ .Values.workload.name }}
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+  selector:
+    app: {{ .Values.workload.name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  name: {{ .Values.workload.name }}
+  namespace: {{ .Values.workload.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.workload.name }}
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.workload.name }}
+        version: v1
+      annotations:
+        sidecar.istio.io/inject: 'true'
+        inject.istio.io/templates: custom,sidecar
+    spec:
+      serviceAccount: {{ .Values.serviceAccountName }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      containers:
+      - image: docker.io/kong/httpbin
+        imagePullPolicy: IfNotPresent
+        name: {{ .Values.workload.name }}
+        command: ["gunicorn", "-b", "0.0.0.0:8080", "httpbin:app", "-k", "gevent"]
+        ports:
+        - containerPort: 8080

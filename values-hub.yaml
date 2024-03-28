@@ -7,16 +7,52 @@ clusterGroup:
     - golang-external-secrets
     - config-demo
     - hello-world
+    - openshift-nfd
+    - inteldeviceplugin
+    - istio-system
+    - httpbin
+
   subscriptions:
     acm:
       name: advanced-cluster-management
       namespace: open-cluster-management
       channel: release-2.9
       #csv: advanced-cluster-management.v2.6.1
+
+    nfd:
+      name: nfd
+      namespace: openshift-nfd
+      channel: stable
+      source: redhat-operators
+
+    sailoperator:
+      name: sailoperator
+      # namespace: istio-system
+      sourceNamespace: openshift-marketplace
+      startingCSV: sailoperator.v3.0.0-nightly-2024-01-22
+      csv: sailoperator.v3.0.0-nightly-2024-01-22
+      installPlanApproval: Manual
+      channel: 3.0-nightly
+      source: community-operators
+
+    intel-device-plugins-operator:
+      name: intel-device-plugins-operator
+      sourceNamespace: openshift-marketplace
+      startingCSV: intel-device-plugins-operator.v0.28.0
+      installPlanApproval: Automatic
+      namespace: inteldeviceplugin
+      channel: alpha
+      source: certified-operators
+
   projects:
     - hub
     - config-demo
     - hello-world
+    - openshift-nfd
+    - inteldeviceplugin
+    - istio
+    - httpbin
+    - openshift-operators
   # Explicitly mention the cluster-state based overrides we plan to use for this pattern.
   # We can use self-referential variables because the chart calls the tpl function with these variables defined
   sharedValueFiles:
@@ -32,6 +68,7 @@ clusterGroup:
   #   - '/overrides/values-{{ $.Values.global.clusterPlatform }}-{{ $.Values.clusterGroup.name }}.yaml'
   #   - '/overrides/values-{{ $.Values.global.clusterVersion }}-{{ $.Values.clusterGroup.name }}.yaml"
   #   - '/overrides/values-{{ $.Values.global.localClusterName }}.yaml'
+
 
   # This kind of variable substitution will work with any of the variables the Validated Patterns operator knows
   # about and sets, so this is also possible, for example:
@@ -68,6 +105,37 @@ clusterGroup:
       namespace: hello-world
       project: hello-world
       path: charts/all/hello-world
+
+    nfd:
+      name: nfd
+      namespace: openshift-nfd
+      project: openshift-nfd
+      path: charts/all/nfd
+
+    sailoperator:
+      name: sailoperator
+      namespace: istio-system
+      project: istio
+      path: charts/all/istio
+
+    intel-device-plugins-operator:
+      name: intel-device-plugins-operator
+      namespace: inteldeviceplugin
+      project: inteldeviceplugin
+      path: charts/all/qat
+
+    httpbin:
+      name: httpbin
+      namespace: httpbin
+      project: httpbin
+      path: charts/all/httpbin-demo
+
+    openshift-operators:
+      name: openshift-operators
+      namespace: openshift-operators
+      project: openshift-operators
+      path: charts/all/openshift-operators
+
   imperative:
     # NOTE: We *must* use lists and not hashes. As hashes lose ordering once parsed by helm
     # The default schedule is every 10 minutes: imperative.schedule

@@ -1,0 +1,45 @@
+workload:
+  namespace: httpbin
+  name: httpbin
+
+job:
+  image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+
+serviceAccountName: httpbin-sa
+rbac:
+  roles:
+    - name: httpbin-role
+      createRole: true
+      apiGroups:
+        - '""'
+        - '"apps"'
+        - '"rbac.authorization.k8s.io"'
+        - '"security.openshift.io"'
+      scope:
+        cluster: true
+      resources:
+        - namespaces
+        - deployments
+        - rolebindings
+        - clusterroles
+        - securitycontextconstraints
+      verbs:
+        - "get"
+        - "list"
+        - "patch"
+        - "update"
+        - "use"
+  roleBindings:
+    - name: httpbin-role-binding
+      createBinding: true
+      scope:
+        cluster: true
+        namespace: ""
+      subjects:
+        kind: ServiceAccount
+        name: httpbin-sa
+        namespace: httpbin
+        apiGroup: ""
+      roleRef:
+        kind: ClusterRole
+        name: httpbin-role
