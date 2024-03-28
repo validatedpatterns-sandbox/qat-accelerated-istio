@@ -1,0 +1,43 @@
+job:
+  image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+  namespace: inteldeviceplugin
+
+serviceAccountName: mcp-qat-config-sa
+rbac:
+  roles:
+    - name: qat-config-role
+      createRole: true
+      apiGroups:
+        - '""'
+        - '"apps"'
+        - '"apiextensions.k8s.io"'
+        - '"machineconfiguration.openshift.io"'
+        - '"deviceplugin.intel.com"'
+      scope:
+        cluster: true
+      resources:
+        - machineconfigs
+        - qatdeviceplugins
+        - pods
+        - namespaces
+      verbs:
+        - "get"
+        - "list"
+        - "patch"
+        - "update"
+        - "create"
+        - "watch"
+  roleBindings:
+    - name: qat-config-rolebinding
+      createBinding: true
+      scope:
+        cluster: true
+        namespace: ""
+      subjects:
+        kind: ServiceAccount
+        name: mcp-qat-config-sa
+        namespace: inteldeviceplugin
+        apiGroup: ""
+      roleRef:
+        kind: ClusterRole
+        name: qat-config-role
