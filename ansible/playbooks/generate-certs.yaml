@@ -1,0 +1,43 @@
+---
+- name: Generate keys and certificates for httpbin demo application
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    cert_directory_path: "{{ lookup('env', 'HOME') }}/certs"
+    client_cert_key_path: "{{ cert_directory_path }}/example.com"
+    server_cert_key_path: "{{ cert_directory_path }}/httpbin.example.com"
+    app_cert_key_path: "{{ cert_directory_path }}/helloworld.example.com"
+    cli_cert_key_path: "{{ cert_directory_path }}/client.example.com"
+  tasks:
+    - name: Creates directories for certs and keys
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ cert_directory_path }}"
+
+    - name: Create private key for example.com
+      ansible.builtin.command:
+        cmd: openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=example Inc./CN=example.com' -keyout {{ client_cert_key_path + '.key' }} -out {{ client_cert_key_path + '.crt' }}
+        creates: "{{ client_cert_key_path }}.key"
+
+    - name: Create private keys for the service
+      ansible.builtin.command:
+        cmd: openssl req -out {{ item.value + '.csr' }} -newkey rsa:2048 -nodes -keyout {{ item.value + '.key' }} -subj "/CN={{ item.key }}.example.com/O={{ item.key }} organization"
+        creates: "{{ item.value }}.key"
+      loop: "{{ service_data | dict2items }}"
+      vars:
+        service_data:
+          httpbin: "{{ server_cert_key_path }}"
+          helloworld: "{{ app_cert_key_path }}"
+          client: "{{ cli_cert_key_path }}"
+
+    - name: Create certificates for the service
+      ansible.builtin.command:
+        cmd: openssl x509 -req -sha256 -days 365 -CA {{ client_cert_key_path + '.crt' }} -CAkey {{ client_cert_key_path + '.key' }} -set_serial 0 -in {{ item + '.csr' }} -out {{ item + '.crt' }}
+        creates: "{{ item }}.crt"
+      loop:
+        - "{{ server_cert_key_path }}"
+        - "{{ app_cert_key_path }}"
+        - "{{ cli_cert_key_path }}"

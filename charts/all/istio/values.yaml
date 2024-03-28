@@ -1,0 +1,60 @@
+workload:
+  namespace: httpbin
+  name: httpbin
+
+secretStore:
+  name: vault-backend
+  kind: ClusterSecretStore
+
+applicationsecret:
+  key: secret/global
+
+job:
+  image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+
+machineconfigName:
+  iommu: 100-intel-qat-intel-iommu-on
+  fwpath: 100-alternative-fw-path-for-worker-nodes
+
+serviceAccountName: istio-sidecar-injection-sa
+rbac:
+  roles:
+    - name: sidecar-injection
+      createRole: true
+      apiGroups:
+        - '""'
+        - '"apps"'
+        - '"machineconfiguration.openshift.io"'
+        - '"rbac.authorization.k8s.io"'
+        - '"security.openshift.io"'
+      scope:
+        cluster: true
+      resources:
+        - namespaces
+        - deployments
+        - machineconfigpools
+        - rolebindings
+        - clusterroles
+        - securitycontextconstraints
+        - secrets
+      verbs:
+        - "create"
+        - "get"
+        - "list"
+        - "patch"
+        - "update"
+        - "use"
+  roleBindings:
+    - name: sidecar-injection
+      createBinding: true
+      scope:
+        cluster: true
+        namespace: ""
+      subjects:
+        kind: ServiceAccount
+        name: istio-sidecar-injection-sa
+        namespace: istio-system
+        apiGroup: ""
+      roleRef:
+        kind: ClusterRole
+        name: sidecar-injection

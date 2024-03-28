@@ -1,0 +1,33 @@
+apiVersion: operator.istio.io/v1alpha1
+kind: Istio
+metadata:
+  name: istio-system
+spec:
+  values:
+    meshConfig:
+      defaultConfig:
+        privateKeyProvider:
+          qat:
+            pollDelay: 5ms
+    sidecarInjectorWebhook:
+      templates:
+        custom: |
+          spec:
+            containers:
+            - name: istio-proxy
+              securityContext:
+                capabilities:
+                  add:
+                    [IPC_LOCK]
+                privileged: false
+                allowPrivilegeEscalation: false
+              resources:
+                limits:
+                  qat.intel.com/cy: 1
+                requests:
+                  qat.intel.com/cy: 1
+  updateStrategy:
+    inactiveRevisionDeletionGracePeriodSeconds: 30
+    type: InPlace
+  namespace: istio-system
+  version: v1.20.1
