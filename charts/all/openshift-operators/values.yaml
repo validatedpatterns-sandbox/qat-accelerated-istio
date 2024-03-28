@@ -1,0 +1,36 @@
+job:
+  image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+
+serviceAccountName: istio-operator-sa
+rbac:
+  roles:
+    - name: istio-operator-role
+      createRole: true
+      apiGroups:
+        - '""'
+        - '"operators.coreos.com"'
+        - '"rbac.authorization.k8s.io"'
+      scope:
+        cluster: true
+      resources:
+        - namespaces
+        - installplans
+      verbs:
+        - "get"
+        - "list"
+        - "patch"
+        - "update"
+  roleBindings:
+    - name: istio-operator-role-binding
+      createBinding: true
+      scope:
+        cluster: true
+        namespace: ""
+      subjects:
+        kind: ServiceAccount
+        name: istio-operator-sa
+        namespace: openshift-operators
+        apiGroup: ""
+      roleRef:
+        kind: ClusterRole
+        name: istio-operator-role
